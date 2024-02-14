@@ -2,43 +2,71 @@
 @name         Canvas Enhancements
 @description  Fix the atrocious amount of wasted space in the Grades page, especially in smaller window sizes
 @license      MIT
-@version      1
+@version      2
 @author       rtk0c
 @namespace    https://github.com/rtk0c
 ==/UserStyle== */
 
 @-moz-document domain("instructure.com") {
 
-/* Reduce padding in general to save screen space */
-.ic-Table.ic-Table--grades-summary-table th,
-.ic-Table.ic-Table--grades-summary-table td {
+  /**** General ****/
+
+  /* In general, ever page has this hiearchy:
+   *   body div.ic-app-main-content div.ic-Layout-contentWrapper div.ic-Layout-contentMain <whatever>
+   * On course pages, the side bars and header bar are outside the "content" divs
+   * On others like the Dashboard, Calendar, everything seems to be inside the "content" divs
+   */
+  
+  /* Reduce padding around each course page */
+  .ic-Layout-contentMain {
+    padding: /*top: same value as the left hand sidebar's top padding*/
+      24px 8px 8px 8px !important;
+  }
+  /* Re-enable the padding for the dashboard page
+   * I assume these values are designed for this page but got unintentionally applied to every page
+   * (if we just let the above reduced paddings take place here, it gets quite unreadable since text starts overlapping with borders)
+   */
+  .ic-dashboard-app {
+    padding: 36px 48px 48px 48px !important;
+  }
+  /* TODO: fix the padding for Calendar, Inbox, etc. pages */
+
+  /**** Grades Page ****/
+
+  /* For all occurences of table#grades_summary, that element also has classd .ic-Table.ic-Table--grades-summary-table 
+   * We are using the id selector just because it's shorter :)
+   */
+  
+  /* Reduce padding around table cells to save screen space */
+  table#grades_summary th,
+  table#grades_summary td {
     padding: 6px 6px 6px 6px !important;
-}
+  }
 
-/* Columns: Name, Due, Submitted, Status, Score, <details>, <unnamed>
- * The last one appears to be completely empty, no idea why it even exists
- */
-table#grades_summary > thead > tr > th:nth-child(7) {
+  /* Columns: Name, Due, Submitted, Status, Score, <details>, <unnamed>
+   * The last one appears to be completely empty, no idea why it even exists
+   */
+  table#grades_summary > thead > tr > th:nth-child(7) {
     display: none !important;
-}
+  }
 
-/* Reducing padding around the <details> links*/
-/* There are 4 classes corresponding to the 4 links in there:
- * .toggle_final_grade_info, .toggle_score_details_link, .toggle_rubric_assessments_link, .toggle_comments_link
- * I don't think a.tooltip is used by anything else in that table, so selecting on them specifically isn't really needed
- */
-table#grades_summary a.tooltip {
+  /* Reducing padding around the <details> links*/
+  /* There are 4 classes corresponding to the 4 links in there:
+   *   .toggle_final_grade_info, .toggle_score_details_link, .toggle_rubric_assessments_link, .toggle_comments_link
+   * I don't think a.tooltip is used by anything else in that table, so selecting on them specifically isn't really needed
+   */
+  table#grades_summary a.tooltip {
     padding: 0 !important;
-}
+  }
 
-/* If they aren't visisble anyways, let's just remove them from box sizing calculations */
-table#grades_summary a.tooltip[style="visibility: hidden;"] {
+  /* If they aren't visisble anyways, let's just remove them from box sizing calculations */
+  table#grades_summary a.tooltip[style="visibility: hidden;"] {
     display: none !important;
-}
+  }
 
-table#grades_summary td.due {
-    /* Canvas by default uses `nowrap` which makes that cell very much unncessarily long */
+  table#grades_summary td.due {
+      /* Canvas by default uses `nowrap` which makes that cell very much unncessarily long */
     white-space: normal !important;
-}
-
+  }
+  
 }
