@@ -3,11 +3,18 @@
 // @namespace   https://github.com/rtk0c
 // @match       https://github.com/*
 // @grant       none
-// @version     3.0
+// @version     4.0
 // @author      rtk0c
 // @description Open files in raw.githubusercontent.com by holding alt
 // @run-at      document-idle
 // ==/UserScript==
+
+const theTooltip = 'alt-click to open the file in raw.githubusercontent.com'
+
+// All of these work immediately upon page load: GitHub SSR made this a whole lot easier
+//   document.querySelectorAll('a.Link--primary')
+//   document.getElementById('repos-file-tree')
+//   document.getElementsByClassName('PRIVATE_TreeView-item')
 
 function altKeyAction(action, href, ev) {
   if (ev.altKey) {
@@ -29,16 +36,10 @@ for (const n of document.querySelectorAll('a.Link--primary')) {
   const [_, user, repo, path] = matches
   const targetHref = `https://raw.githubusercontent.com/${user}/${repo}/refs/heads/${path}`
 
-  // FIXME: this is not good for accesibility
-  n.title = 'alt-click to open the file in raw.githubusercontent.com'
-
+  n.title = theTooltip // Inaccesible
   n.addEventListener('click', altKeyAction.bind(null, openHere, targetHref))
   n.addEventListener('auxclick', altKeyAction.bind(null, openInNewTab, targetHref))
 }
-
-// Both these work immediately: GitHub SSR made this a whole lot easier
-//console.log(document.getElementById('repos-file-tree'))
-//console.log(document.getElementsByClassName('PRIVATE_TreeView-item'))
 
 function removeSuffix(s, suffix) {
   if (s.endsWith(suffix))
@@ -46,12 +47,11 @@ function removeSuffix(s, suffix) {
   return null
 }
 
-// FIXME internal navigation (clicking on any file or directory) is SPA behavior: replaces DOM elements but doesn't refresh the page, so all of our event listeners will be gone
+// FIXME internal navigation in the sidebar (clicking on any file or directory) is SPA,
+//       replacing main file list DOM nodes without triggering refresh, so the above code doesn't run on the new files
 
 const [_, user, repo, branch] = window.location.href.match(/^https?:\/\/github\.com\/([^\/]*)\/([^\/]*)\/(?:[^\/]*)\/([^\/]*)\//)
 function hookFileTreeItem(item) {
-  if (item.tagName !== 'LI')
-    return
   if (item.getElementsByClassName('PRIVATE_TreeView-item-toggle').length > 0)
     return // is a directory
 
@@ -59,9 +59,7 @@ function hookFileTreeItem(item) {
   const path = removeSuffix(item.id, '-item')
   const targetHref = `https://raw.githubusercontent.com/${user}/${repo}/refs/heads/${branch}/${path}`
 
-  // FIXME: this is not good for accesibility
-  item.title = 'alt-click to open the file in raw.githubusercontent.com'
-
+  item.title = theTooltip // Inaccesible
   item.addEventListener('click', altKeyAction.bind(null, openHere, targetHref))
   item.addEventListener('auxclick', altKeyAction.bind(null, openInNewTab, targetHref))
 }
@@ -81,7 +79,15 @@ function hookSidebar() {
   new MutationObserver(mutationList => {
     for (const m of mutationList) {
       for (const item of m.addedNodes) {
-        hookFileTreeItem(item)
+        if (item.tagName === 'LI') {
+          // Inserted by arrow expand
+          hookFileTreeItem(item)
+        } else if (item.tagName === 'UL') {
+          // Inserted by click to nav into directory
+          for (const li of item.children) {
+            hookFileTreeItem(li)
+          }
+        }
       }
     }
   }).observe(fileTree, { subtree: true, childList: true })
