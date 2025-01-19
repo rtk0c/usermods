@@ -46,6 +46,8 @@ function removeSuffix(s, suffix) {
         return null
 }
 
+// FIXME internal navigation (clicking on any file or directory) is SPA behavior: replaces DOM elements but doesn't refresh the page, so all of our event listeners will be gone
+
 const [_, user, repo, branch] = window.location.href.match(/^https?:\/\/github\.com\/([^\/]*)\/([^\/]*)\/(?:[^\/]*)\/([^\/]*)\//)
 function hookFileTreeItem(item) {
     if (item.tagName !== 'LI')
@@ -78,11 +80,9 @@ function hookSidebar() {
         // Yes, GitHub's code loads the subdirectory and inserts <ul> and then <li> one by one
         new MutationObserver(mutationList => {
             for (const m of mutationList) {
-                if (m.target.tagName !== 'UL')
-                    continue
-                    for (const item of m.addedNodes) {
-                        hookFileTreeItem(item)
-                    }
+                for (const item of m.addedNodes) {
+                    hookFileTreeItem(item)
+                }
             }
         }).observe(fileTree, { subtree: true, childList: true })
 
@@ -91,9 +91,9 @@ function hookSidebar() {
 
 if (!hookSidebar()) {
     // Sidebar collapsed right now, wait until user clicks the expand button to try again
-    const btn = document.querySelector('button[class^="ExpandFileTreeButton-"]')
+    const btn = document.querySelector('button[class*="ExpandFileTreeButton-"]')
     btn.addEventListener('click', e => {
         // Do this after all GitHub's js runs
-        setTimeout(0, hookSidebar)
+        setTimeout(hookSidebar, 0)
     }, { once: true })
 }
